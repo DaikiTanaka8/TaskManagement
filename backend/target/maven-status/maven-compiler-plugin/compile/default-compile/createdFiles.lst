@@ -1,5 +1,0 @@
-com/taskmanagement/entity/Task.class
-com/taskmanagement/controller/TaskController.class
-com/taskmanagement/service/TaskService.class
-com/taskmanagement/TaskManagementApplication.class
-com/taskmanagement/repository/TaskRepository.class
