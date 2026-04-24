@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaskManagement - プロトタイプ</title>
+  <style>
+    /* ===== Reset & Base ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      color: #333;
+    }
+
+    /* ===== Header ===== */
+    header {
+      background: #2563eb;
+      color: #fff;
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 { font-size: 20px; font-weight: 700; letter-spacing: 0.5px; }
+
+    .view-toggle {
+      display: flex;
+      gap: 8px;
+    }
+    .view-toggle button {
+      padding: 6px 16px;
+      border-radius: 20px;
+      border: 2px solid rgba(255,255,255,0.6);
+      background: transparent;
+      color: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .view-toggle button.active {
+      background: #fff;
+      color: #2563eb;
+      border-color: #fff;
+    }
+    .view-toggle button:hover:not(.active) {
+      background: rgba(255,255,255,0.15);
+    }
+
+    /* ===== Main Layout ===== */
+    main {
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ===== Board ===== */
+    .board {
+      display: flex;
+      gap: 16px;
+      overflow-x: auto;
+      padding-bottom: 16px;
+      align-items: flex-start;
+    }
+
+    /* ===== Column ===== */
+    .column {
+      background: #ebecf0;
+      border-radius: 12px;
+      width: 280px;
+      min-width: 280px;
+      display: flex;
+      flex-direction: column;
+      max-height: calc(100vh - 120px);
+    }
+    .column-header {
+      padding: 12px 16px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .column-title {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .column-title .badge {
+      background: rgba(0,0,0,0.12);
+      color: #555;
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .genre-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .task-list {
+      padding: 0 8px;
+      overflow-y: auto;
+      flex: 1;
+      min-height: 40px;
+    }
+    .task-list.drag-over {
+      background: rgba(37,99,235,0.07);
+      border-radius: 8px;
+    }
+
+    .add-task-btn {
+      margin: 8px;
+      padding: 8px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      color: #5e6c84;
+      font-size: 13px;
+      text-align: left;
+      width: calc(100% - 16px);
+      transition: background 0.15s;
+    }
+    .add-task-btn:hover { background: rgba(0,0,0,0.06); color: #172b4d; }
+
+    /* ===== Task Card ===== */
+    .task-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      cursor: grab;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      transition: box-shadow 0.2s, transform 0.1s;
+      position: relative;
+      user-select: none;
+    }
+    .task-card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+    .task-card.dragging { opacity: 0.5; transform: rotate(2deg); cursor: grabbing; }
+    .task-card.completed { opacity: 0.6; }
+    .task-card.completed .task-title { text-decoration: line-through; color: #888; }
+
+    .task-card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    .task-checkbox {
+      width: 16px;
+      height: 16px;
+      margin-top: 2px;
+      cursor: pointer;
+      accent-color: #2563eb;
+      flex-shrink: 0;
+    }
+    .task-title {
+      font-size: 14px;
+      font-weight: 500;
+      flex: 1;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .task-edit-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #aaa;
+      font-size: 16px;
+      padding: 0 2px;
+      line-height: 1;
+      flex-shrink: 0;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .task-card:hover .task-edit-btn { opacity: 1; }
+    .task-edit-btn:hover { color: #2563eb; }
+
+    .task-meta {
+      display: flex;
+      gap: 6px;
+      margin-top: 7px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+    .tag-genre {
+      color: #fff;
+    }
+    .tag-deadline {
+      background: #fff3cd;
+      color: #856404;
+    }
+    .tag-deadline.overdue {
+      background: #f8d7da;
+      color: #842029;
+    }
+    .tag-deadline.today {
+      background: #d1e7dd;
+      color: #0f5132;
+    }
+
+    /* ===== Completed Section ===== */
+    .completed-section {
+      margin-top: 32px;
+    }
+    .completed-section h2 {
+      font-size: 14px;
+      font-weight: 700;
+      color: #5e6c84;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .completed-section h2::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #d0d4dc;
+    }
+    .completed-board {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .completed-board .task-card {
+      width: 280px;
+      cursor: default;
+    }
+
+    /* ===== Modal Overlay ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      width: 480px;
+      max-width: 95vw;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+      overflow: hidden;
+      animation: slideUp 0.2s ease;
+    }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+
+    .modal-header {
+      background: #2563eb;
+      color: #fff;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-header h2 { font-size: 16px; font-weight: 700; }
+    .modal-close {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+      opacity: 0.8;
+    }
+    .modal-close:hover { opacity: 1; }
+
+    .modal-body { padding: 20px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #5e6c84;
+      margin-bottom: 6px;
+    }
+    .form-group label .required {
+      color: #e53e3e;
+      margin-left: 2px;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1.5px solid #dde1e7;
+      border-radius: 8px;
+      font-size: 14px;
+      color: #172b4d;
+      transition: border-color 0.2s;
+      outline: none;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .error-msg { color: #e53e3e; font-size: 12px; margin-top: 4px; display: none; }
+
+    .modal-footer {
+      padding: 12px 20px 20px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+    .btn {
+      padding: 9px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.15s;
+    }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: #ebecf0; color: #333; }
+    .btn-secondary:hover { background: #dde1e7; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-danger-spacer { margin-right: auto; }
+
+    /* ===== Toast ===== */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      color: #fff;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.3s;
+      pointer-events: none;
+      z-index: 999;
+    }
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    /* ===== Genre Colors ===== */
+    .genre-仕事   { background: #3b82f6; }
+    .genre-家庭   { background: #10b981; }
+    .genre-趣味   { background: #f59e0b; }
+    .genre-買い物 { background: #ef4444; }
+    .genre-未設定 { background: #94a3b8; }
+  </style>
+</head>
+<body>
+
+<!-- ===== Header ===== -->
+<header>
+  <h1>📋 TaskManagement</h1>
+  <div class="view-toggle">
+    <button id="btn-genre"    class="active" onclick="switchView('genre')">ジャンル別</button>
+    <button id="btn-deadline"               onclick="switchView('deadline')">期限別</button>
+  </div>
+</header>
+
+<!-- ===== Main ===== -->
+<main>
+  <div id="board" class="board"></div>
+  <div id="completed-section" class="completed-section" style="display:none">
+    <h2>完了済み</h2>
+    <div id="completed-board" class="completed-board"></div>
+  </div>
+</main>
+
+<!-- ===== Task Detail Modal ===== -->
+<div id="modal-overlay" class="modal-overlay" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="modal-title">タスク詳細</h2>
+      <button class="modal-close" onclick="closeModal()" aria-label="閉じる">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>タイトル <span class="required">*</span></label>
+        <input id="field-title" type="text" placeholder="タスクのタイトルを入力" />
+        <div id="error-title" class="error-msg">タイトルは必須です</div>
+      </div>
+      <div class="form-group">
+        <label>メモ・説明文</label>
+        <textarea id="field-memo" placeholder="タスクの詳細や補足を入力（任意）"></textarea>
+      </div>
+      <div class="form-group">
+        <label>期限（日付）</label>
+        <input id="field-deadline" type="date" />
+      </div>
+      <div class="form-group">
+        <label>ジャンル</label>
+        <select id="field-genre">
+          <option value="">未設定</option>
+          <option value="仕事">仕事</option>
+          <option value="家庭">家庭</option>
+          <option value="趣味">趣味</option>
+          <option value="買い物">買い物</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button id="btn-delete" class="btn btn-danger btn-danger-spacer" onclick="deleteTask()" style="display:none">削除</button>
+      <button class="btn btn-secondary" onclick="closeModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveTask()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Toast ===== -->
+<div id="toast"></div>
+
+<script>
+// ===== State =====
+let tasks = JSON.parse(localStorage.getItem('tm_tasks') || '[]');
+let currentView = 'genre';
+let editingId = null;
+let defaultGenre = null;
+
+const GENRES = ['仕事', '家庭', '趣味', '買い物', '未設定'];
+
+const GENRE_COLORS = {
+  '仕事': '#3b82f6',
+  '家庭': '#10b981',
+  '趣味': '#f59e0b',
+  '買い物': '#ef4444',
+  '未設定': '#94a3b8',
+};
+
+// ===== Persistence =====
+function save() {
+  localStorage.setItem('tm_tasks', JSON.stringify(tasks));
+}
+
+// ===== Helpers =====
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2);
+}
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function endOfWeek() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = 7 - day;
+  d.setDate(d.getDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function deadlineGroup(deadline) {
+  if (!deadline) return '期限なし';
+  const t = today();
+  const eow = endOfWeek();
+  if (deadline < t)  return '今日やること'; // overdue → 今日扱い
+  if (deadline === t) return '今日やること';
+  if (deadline <= eow) return '今週やること';
+  return 'それ以降';
+}
+
+function deadlineLabel(deadline) {
+  if (!deadline) return null;
+  const t = today();
+  if (deadline < t)  return { text: '期限切れ', cls: 'overdue' };
+  if (deadline === t) return { text: '今日', cls: 'today' };
+  return { text: deadline, cls: '' };
+}
+
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== Render =====
+function render() {
+  const active = tasks.filter(t => !t.completed);
+  const done   = tasks.filter(t => t.completed);
+
+  const board = document.getElementById('board');
+  board.innerHTML = '';
+
+  if (currentView === 'genre') {
+    renderGenreView(board, active);
+  } else {
+    renderDeadlineView(board, active);
+  }
+
+  renderCompleted(done);
+}
+
+function renderGenreView(board, active) {
+  GENRES.forEach(genre => {
+    const grouped = active.filter(t => (t.genre || '未設定') === genre);
+    const col = buildColumn(
+      genre,
+      GENRE_COLORS[genre],
+      grouped,
+      genre
+    );
+    board.appendChild(col);
+  });
+}
+
+function renderDeadlineView(board, active) {
+  const groups = ['今日やること', '今週やること', 'それ以降', '期限なし'];
+  const groupColors = {
+    '今日やること': '#ef4444',
+    '今週やること': '#f59e0b',
+    'それ以降':     '#3b82f6',
+    '期限なし':     '#94a3b8',
+  };
+  groups.forEach(grp => {
+    const grouped = active.filter(t => deadlineGroup(t.deadline) === grp);
+    const col = buildColumn(grp, groupColors[grp], grouped, null);
+    board.appendChild(col);
+  });
+}
+
+function buildColumn(title, color, taskList, addGenre) {
+  const col = document.createElement('div');
+  col.className = 'column';
+  col.dataset.group = title;
+
+  // Drag-over handlers
+  col.addEventListener('dragover', e => {
+    e.preventDefault();
+    col.querySelector('.task-list').classList.add('drag-over');
+  });
+  col.addEventListener('dragleave', () => {
+    col.querySelector('.task-list').classList.remove('drag-over');
+  });
+  col.addEventListener('drop', e => {
+    e.preventDefault();
+    col.querySelector('.task-list').classList.remove('drag-over');
+    handleDrop(e, title, addGenre);
+  });
+
+  col.innerHTML = `
+    <div class="column-header">
+      <div class="column-title">
+        <span class="genre-dot" style="background:${color}"></span>
+        ${escHtml(title)}
+        <span class="badge">${taskList.length}</span>
+      </div>
+    </div>
+    <div class="task-list" id="list-${escHtml(title)}"></div>
+    <button class="add-task-btn" onclick="openModalNew('${escHtml(addGenre || '')}')">+ タスクを追加</button>
+  `;
+
+  const list = col.querySelector('.task-list');
+  taskList.forEach(task => list.appendChild(buildCard(task)));
+
+  return col;
+}
+
+function buildCard(task) {
+  const card = document.createElement('div');
+  card.className = 'task-card' + (task.completed ? ' completed' : '');
+  card.draggable = true;
+  card.dataset.id = task.id;
+
+  card.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text/plain', task.id);
+    setTimeout(() => card.classList.add('dragging'), 0);
+  });
+  card.addEventListener('dragend', () => card.classList.remove('dragging'));
+
+  const dl = task.deadline ? deadlineLabel(task.deadline) : null;
+  const genre = task.genre || '未設定';
+  const genreColor = GENRE_COLORS[genre] || '#94a3b8';
+
+  card.innerHTML = `
+    <div class="task-card-top">
+      <input type="checkbox" class="task-checkbox"
+        ${task.completed ? 'checked' : ''}
+        onclick="toggleComplete('${task.id}', event)" />
+      <span class="task-title">${escHtml(task.title)}</span>
+      <button class="task-edit-btn" onclick="openModalEdit('${task.id}', event)" title="編集">✏️</button>
+    </div>
+    ${task.memo ? `<div style="font-size:12px;color:#888;margin-top:5px;padding-left:24px;">${escHtml(task.memo)}</div>` : ''}
+    <div class="task-meta" style="padding-left:24px;">
+      ${currentView === 'deadline' ? `<span class="tag tag-genre" style="background:${genreColor}">${escHtml(genre)}</span>` : ''}
+      ${dl ? `<span class="tag tag-deadline ${dl.cls}">${escHtml(dl.text)}</span>` : ''}
+    </div>
+  `;
+
+  return card;
+}
+
+function renderCompleted(done) {
+  const sec = document.getElementById('completed-section');
+  const cb  = document.getElementById('completed-board');
+  if (done.length === 0) { sec.style.display = 'none'; return; }
+  sec.style.display = '';
+  cb.innerHTML = '';
+  done.forEach(task => cb.appendChild(buildCard(task)));
+}
+
+// ===== Drag & Drop =====
+function handleDrop(e, groupTitle, addGenre) {
+  const id = e.dataTransfer.getData('text/plain');
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+
+  if (currentView === 'genre' && addGenre !== null) {
+    task.genre = addGenre || null;
+  }
+  save();
+  render();
+  showToast('タスクを移動しました');
+}
+
+// ===== View Switch =====
+function switchView(view) {
+  currentView = view;
+  document.getElementById('btn-genre').classList.toggle('active', view === 'genre');
+  document.getElementById('btn-deadline').classList.toggle('active', view === 'deadline');
+  render();
+}
+
+// ===== Modal =====
+function openModalNew(genre) {
+  editingId = null;
+  defaultGenre = genre;
+  document.getElementById('modal-title').textContent = 'タスクを作成';
+  document.getElementById('btn-delete').style.display = 'none';
+  clearForm();
+  if (genre) document.getElementById('field-genre').value = genre;
+  openModal();
+}
+
+function openModalEdit(id, e) {
+  if (e) e.stopPropagation();
+  editingId = id;
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  document.getElementById('modal-title').textContent = 'タスクを編集';
+  document.getElementById('btn-delete').style.display = '';
+  document.getElementById('field-title').value    = task.title;
+  document.getElementById('field-memo').value     = task.memo || '';
+  document.getElementById('field-deadline').value = task.deadline || '';
+  document.getElementById('field-genre').value    = task.genre || '';
+  hideError();
+  openModal();
+}
+
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('field-title').focus();
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  editingId = null;
+}
+
+function clearForm() {
+  document.getElementById('field-title').value    = '';
+  document.getElementById('field-memo').value     = '';
+  document.getElementById('field-deadline').value = '';
+  document.getElementById('field-genre').value    = defaultGenre || '';
+  hideError();
+}
+
+function hideError() {
+  document.getElementById('error-title').style.display = 'none';
+  document.getElementById('field-title').style.borderColor = '';
+}
+
+// ===== CRUD =====
+function saveTask() {
+  const title = document.getElementById('field-title').value.trim();
+  if (!title) {
+    document.getElementById('error-title').style.display = 'block';
+    document.getElementById('field-title').style.borderColor = '#e53e3e';
+    document.getElementById('field-title').focus();
+    return;
+  }
+
+  const memo     = document.getElementById('field-memo').value.trim();
+  const deadline = document.getElementById('field-deadline').value;
+  const genre    = document.getElementById('field-genre').value;
+
+  if (editingId) {
+    const task = tasks.find(t => t.id === editingId);
+    if (task) {
+      task.title    = title;
+      task.memo     = memo;
+      task.deadline = deadline;
+      task.genre    = genre;
+    }
+    showToast('タスクを保存しました');
+  } else {
+    tasks.push({ id: uid(), title, memo, deadline, genre, completed: false });
+    showToast('タスクを作成しました');
+  }
+
+  save();
+  closeModal();
+  render();
+}
+
+function deleteTask() {
+  if (!editingId) return;
+  if (!confirm('このタスクを削除しますか？')) return;
+  tasks = tasks.filter(t => t.id !== editingId);
+  save();
+  closeModal();
+  render();
+  showToast('タスクを削除しました');
+}
+
+function toggleComplete(id, e) {
+  e.stopPropagation();
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  task.completed = !task.completed;
+  save();
+  render();
+  showToast(task.completed ? '完了済みに移動しました' : 'タスクに戻しました');
+}
+
+// ===== Toast =====
+let toastTimer;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+// ===== Keyboard / Outside Click =====
+document.getElementById('modal-overlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeModal();
+});
+
+// ===== Initial Render =====
+render();
+</script>
+</body>
+</html>
