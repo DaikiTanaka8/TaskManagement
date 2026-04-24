@@ -374,6 +374,10 @@
     .genre-趣味   { background: #f59e0b; }
     .genre-買い物 { background: #ef4444; }
     .genre-未設定 { background: #94a3b8; }
+
+    /* ===== Drop Indicators ===== */
+    .task-card.drop-above { border-top: 3px solid #2563eb; }
+    .task-card.drop-below { border-bottom: 3px solid #2563eb; }
   </style>
 </head>
 <body>
@@ -445,6 +449,7 @@ let tasks = JSON.parse(localStorage.getItem('tm_tasks') || '[]');
 let currentView = 'genre';
 let editingId = null;
 let defaultGenre = null;
+let dragSrcId = null;
 
 const GENRES = ['仕事', '家庭', '趣味', '買い物', '未設定'];
 
@@ -549,14 +554,17 @@ function buildColumn(title, color, taskList, addGenre) {
   const col = document.createElement('div');
   col.className = 'column';
   col.dataset.group = title;
+  col.dataset.addGenre = addGenre || '';
 
-  // Drag-over handlers
+  // Drag-over handlers (for empty column area)
   col.addEventListener('dragover', e => {
     e.preventDefault();
     col.querySelector('.task-list').classList.add('drag-over');
   });
-  col.addEventListener('dragleave', () => {
-    col.querySelector('.task-list').classList.remove('drag-over');
+  col.addEventListener('dragleave', e => {
+    if (!col.contains(e.relatedTarget)) {
+      col.querySelector('.task-list').classList.remove('drag-over');
+    }
   });
   col.addEventListener('drop', e => {
     e.preventDefault();
@@ -589,10 +597,56 @@ function buildCard(task) {
   card.dataset.id = task.id;
 
   card.addEventListener('dragstart', e => {
+    dragSrcId = task.id;
     e.dataTransfer.setData('text/plain', task.id);
     setTimeout(() => card.classList.add('dragging'), 0);
   });
-  card.addEventListener('dragend', () => card.classList.remove('dragging'));
+  card.addEventListener('dragend', () => {
+    card.classList.remove('dragging');
+    document.querySelectorAll('.task-card').forEach(c => c.classList.remove('drop-above', 'drop-below'));
+    dragSrcId = null;
+  });
+
+  card.addEventListener('dragover', e => {
+    e.preventDefault();
+    if (dragSrcId === task.id) return;
+    const rect = card.getBoundingClientRect();
+    document.querySelectorAll('.task-card').forEach(c => c.classList.remove('drop-above', 'drop-below'));
+    card.classList.add(e.clientY > rect.top + rect.height / 2 ? 'drop-below' : 'drop-above');
+  });
+  card.addEventListener('dragleave', e => {
+    if (!card.contains(e.relatedTarget)) {
+      card.classList.remove('drop-above', 'drop-below');
+    }
+  });
+  card.addEventListener('drop', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    card.classList.remove('drop-above', 'drop-below');
+
+    const srcId = e.dataTransfer.getData('text/plain');
+    if (srcId === task.id) return;
+    const srcTask = tasks.find(t => t.id === srcId);
+    if (!srcTask) return;
+
+    const col = card.closest('.column');
+    if (currentView === 'genre') {
+      const addGenre = col.dataset.addGenre;
+      srcTask.genre = addGenre || null;
+    }
+
+    const rect = card.getBoundingClientRect();
+    const insertAfter = e.clientY > rect.top + rect.height / 2;
+
+    tasks = tasks.filter(t => t.id !== srcId);
+    const targetIdx = tasks.findIndex(t => t.id === task.id);
+    tasks.splice(insertAfter ? targetIdx + 1 : targetIdx, 0, srcTask);
+
+    col.querySelector('.task-list').classList.remove('drag-over');
+    save();
+    render();
+    showToast('タスクを移動しました');
+  });
 
   const dl = task.deadline ? deadlineLabel(task.deadline) : null;
   const genre = task.genre || '未設定';
