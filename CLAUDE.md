@@ -53,6 +53,49 @@ mvn clean package            # JAR ビルド
 | created_at | DATETIME | |
 | updated_at | DATETIME | |
 
+## GitHub ワークフロールール（厳守）
+
+### 大原則
+- **main ブランチへの直接プッシュは絶対禁止**
+- 作業は必ずイシュー起票 → ブランチ作成 → PR → レビュー → マージの順で行う
+
+### イシュー登録ルール
+- 作業を始める前に必ずイシューを登録する
+- タイトルは日本語で、何をするかが一目でわかるように書く
+- ラベルを必ず1つ以上付ける（下記参照）
+- 作業内容・完了条件を本文に記載する
+
+### ラベル一覧
+| ラベル | 用途 |
+|--------|------|
+| `feature` | 新機能の追加 |
+| `bug` | バグ修正 |
+| `refactor` | リファクタリング |
+| `docs` | ドキュメント更新 |
+| `test` | テスト追加・修正 |
+| `chore` | 依存関係更新・設定変更など |
+
+### ブランチ命名規則
+```
+{type}/#{issue番号}-{内容を英語で短く}
+```
+例：
+- `feature/#5-task-create-api`
+- `bug/#12-fix-null-pointer`
+- `refactor/#8-extract-service-layer`
+
+### プルリクエストルール
+- タイトルは `[#イシュー番号] 日本語でやったこと` の形式
+- 本文に `Closes #イシュー番号` を記載してイシューと紐付ける
+- main への直接プッシュは禁止（ブランチ保護により強制）
+
+### Claude Code での作業手順
+1. `gh issue create` でイシューを起票
+2. `git checkout -b feature/#N-description` でブランチ作成
+3. 実装・コミット
+4. `gh pr create` でPRを作成
+5. PRをマージしてブランチを削除
+
 ## API 設計
 
 ベースURL: `http://localhost:8080/api`
