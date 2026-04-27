@@ -1,5 +1,6 @@
 package com.taskmanagement.service;
 
+import com.taskmanagement.dto.TaskRequest;
 import com.taskmanagement.entity.Task;
 import com.taskmanagement.repository.TaskRepository;
 import org.springframework.stereotype.Service;
@@ -19,7 +20,12 @@ public class TaskService {
         return taskRepository.findAll();
     }
 
-    public Task create(Task task) {
+    public Task create(TaskRequest request) {
+        Task task = new Task();
+        task.setTitle(request.getTitle());
+        task.setMemo(request.getMemo());
+        task.setDueDate(request.getDueDate());
+        task.setGenre(request.getGenre());
         return taskRepository.save(task);
     }
 
