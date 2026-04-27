@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { fetchTasks } from '../api/taskApi';
 import Column from './Column';
+import TaskForm from './TaskForm';
 
 const GENRES = ['仕事', '家庭', '趣味', '買い物', '未設定'];
 
@@ -16,6 +17,10 @@ function Board() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleTaskCreated = (newTask) => {
+    setTasks((prev) => [...prev, newTask]);
+  };
+
   if (loading) return <p className="board-message">読み込み中...</p>;
   if (error) return <p className="board-message error">{error}</p>;
 
@@ -27,10 +32,13 @@ function Board() {
   }, {});
 
   return (
-    <div className="board">
-      {GENRES.map((genre) => (
-        <Column key={genre} genre={genre} tasks={tasksByGenre[genre]} />
-      ))}
+    <div className="board-container">
+      <TaskForm onCreated={handleTaskCreated} />
+      <div className="board">
+        {GENRES.map((genre) => (
+          <Column key={genre} genre={genre} tasks={tasksByGenre[genre]} />
+        ))}
+      </div>
     </div>
   );
 }
