@@ -3,6 +3,7 @@ import { DragDropContext } from '@hello-pangea/dnd';
 import { fetchTasks, toggleComplete, reorderTasks } from '../api/taskApi';
 import Column from './Column';
 import TaskForm from './TaskForm';
+import TaskDetailModal from './TaskDetailModal';
 
 const GENRES = ['仕事', '家庭', '趣味', '買い物', '未設定'];
 
@@ -10,6 +11,7 @@ function Board() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   useEffect(() => {
     fetchTasks()
@@ -23,6 +25,14 @@ function Board() {
 
   const handleTaskCreated = (newTask) => {
     setTasks((prev) => [...prev, newTask]);
+  };
+
+  const handleCardClick = (task) => setSelectedTask(task);
+
+  const handleModalClose = () => setSelectedTask(null);
+
+  const handleTaskUpdated = (updated) => {
+    setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
   };
 
   const handleToggleComplete = (id) => {
@@ -91,10 +101,18 @@ function Board() {
               genre={genre}
               tasks={tasksByGenre[genre]}
               onToggleComplete={handleToggleComplete}
+              onCardClick={handleCardClick}
             />
           ))}
         </div>
       </DragDropContext>
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          onClose={handleModalClose}
+          onUpdated={handleTaskUpdated}
+        />
+      )}
     </div>
   );
 }

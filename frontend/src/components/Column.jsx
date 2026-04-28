@@ -1,7 +1,7 @@
 import { Droppable } from '@hello-pangea/dnd';
 import TaskCard from './TaskCard';
 
-function Column({ genre, tasks, onToggleComplete }) {
+function Column({ genre, tasks, onToggleComplete, onCardClick }) {
   return (
     <div className="column">
       <div className="column-header">
@@ -21,6 +21,7 @@ function Column({ genre, tasks, onToggleComplete }) {
                 task={task}
                 index={index}
                 onToggleComplete={onToggleComplete}
+                onCardClick={onCardClick}
               />
             ))}
             {provided.placeholder}
