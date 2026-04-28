@@ -1,5 +1,6 @@
 package com.taskmanagement.controller;
 
+import com.taskmanagement.dto.ReorderRequest;
 import com.taskmanagement.dto.TaskRequest;
 import com.taskmanagement.entity.Task;
 import com.taskmanagement.service.TaskService;
@@ -43,5 +44,11 @@ public class TaskController {
     @PatchMapping("/{id}/complete")
     public Task toggleComplete(@PathVariable Long id) {
         return taskService.toggleComplete(id);
+    }
+
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorder(@RequestBody ReorderRequest request) {
+        taskService.reorder(request);
+        return ResponseEntity.noContent().build();
     }
 }
