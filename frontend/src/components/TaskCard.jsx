@@ -1,6 +1,6 @@
 import { Draggable } from '@hello-pangea/dnd';
 
-function TaskCard({ task, index, onToggleComplete }) {
+function TaskCard({ task, index, onToggleComplete, onCardClick }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -24,11 +24,12 @@ function TaskCard({ task, index, onToggleComplete }) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
+          onClick={() => onCardClick(task)}
         >
           <div className="task-card-header">
             <button
               className={`complete-btn${task.completed ? ' active' : ''}`}
-              onClick={() => onToggleComplete(task.id)}
+              onClick={(e) => { e.stopPropagation(); onToggleComplete(task.id); }}
               title={task.completed ? '未完了に戻す' : '完了にする'}
             >
               {task.completed ? '✓' : '○'}
