@@ -35,6 +35,10 @@ function Board() {
     setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
   };
 
+  const handleTaskDeleted = (id) => {
+    setTasks((prev) => prev.filter((t) => t.id !== id));
+  };
+
   const handleToggleComplete = (id) => {
     toggleComplete(id)
       .then((updated) => {
@@ -111,6 +115,7 @@ function Board() {
           task={selectedTask}
           onClose={handleModalClose}
           onUpdated={handleTaskUpdated}
+          onDeleted={handleTaskDeleted}
         />
       )}
     </div>

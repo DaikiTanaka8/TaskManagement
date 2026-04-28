@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { updateTask } from '../api/taskApi';
+import { updateTask, deleteTask } from '../api/taskApi';
 
 const GENRES = ['仕事', '家庭', '趣味', '買い物', '未設定'];
 
-function TaskDetailModal({ task, onClose, onUpdated }) {
+function TaskDetailModal({ task, onClose, onUpdated, onDeleted }) {
   const [title, setTitle] = useState(task.title);
   const [memo, setMemo] = useState(task.memo || '');
   const [dueDate, setDueDate] = useState(task.dueDate || '');
@@ -31,6 +31,16 @@ function TaskDetailModal({ task, onClose, onUpdated }) {
       })
       .catch(() => setError('保存に失敗しました。'))
       .finally(() => setSaving(false));
+  };
+
+  const handleDelete = () => {
+    if (!window.confirm(`「${task.title}」を削除しますか？この操作は元に戻せません。`)) return;
+    deleteTask(task.id)
+      .then(() => {
+        onDeleted(task.id);
+        onClose();
+      })
+      .catch(() => setError('削除に失敗しました。'));
   };
 
   const handleOverlayClick = (e) => {
@@ -87,10 +97,13 @@ function TaskDetailModal({ task, onClose, onUpdated }) {
         </div>
 
         <div className="modal-footer">
-          <button className="modal-cancel" onClick={onClose}>キャンセル</button>
-          <button className="modal-save" onClick={handleSave} disabled={saving}>
-            {saving ? '保存中...' : '保存'}
-          </button>
+          <button className="modal-delete" onClick={handleDelete}>削除</button>
+          <div className="modal-footer-right">
+            <button className="modal-cancel" onClick={onClose}>キャンセル</button>
+            <button className="modal-save" onClick={handleSave} disabled={saving}>
+              {saving ? '保存中...' : '保存'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

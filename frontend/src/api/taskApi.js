@@ -9,3 +9,5 @@ export const toggleComplete = (id) => axios.patch(`/api/tasks/${id}/complete`).t
 export const reorderTasks = (items) => axios.put('/api/tasks/reorder', { items });
 
 export const updateTask = (id, data) => axios.put(`/api/tasks/${id}`, data).then((r) => r.data);
+
+export const deleteTask = (id) => axios.delete(`/api/tasks/${id}`);
