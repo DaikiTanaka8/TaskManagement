@@ -1,9 +1,11 @@
 package com.taskmanagement.service;
 
+import com.taskmanagement.dto.ReorderRequest;
 import com.taskmanagement.dto.TaskRequest;
 import com.taskmanagement.entity.Task;
 import com.taskmanagement.repository.TaskRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -49,5 +51,16 @@ public class TaskService {
                 .orElseThrow(() -> new RuntimeException("Task not found: " + id));
         task.setCompleted(!task.isCompleted());
         return taskRepository.save(task);
+    }
+
+    @Transactional
+    public void reorder(ReorderRequest request) {
+        for (ReorderRequest.Item item : request.getItems()) {
+            Task task = taskRepository.findById(item.getId())
+                    .orElseThrow(() -> new RuntimeException("Task not found: " + item.getId()));
+            task.setSortOrder(item.getSortOrder());
+            task.setGenre(item.getGenre());
+            taskRepository.save(task);
+        }
     }
 }
