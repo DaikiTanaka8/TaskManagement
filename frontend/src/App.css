@@ -364,10 +364,32 @@ body {
 
 .modal-footer {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 8px;
   padding: 12px 20px;
   border-top: 1px solid #e5e7eb;
+}
+
+.modal-footer-right {
+  display: flex;
+  gap: 8px;
+}
+
+.modal-delete {
+  background: #fee2e2;
+  color: #dc2626;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.modal-delete:hover {
+  background: #fecaca;
 }
 
 .modal-cancel {
