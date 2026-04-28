@@ -96,7 +96,6 @@ function Board() {
 
   return (
     <div className="board-container">
-      <TaskForm onCreated={handleTaskCreated} />
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="board">
           {GENRES.map((genre) => (
@@ -118,6 +117,7 @@ function Board() {
           onDeleted={handleTaskDeleted}
         />
       )}
+      <TaskForm onCreated={handleTaskCreated} />
     </div>
   );
 }
