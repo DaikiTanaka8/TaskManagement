@@ -28,6 +28,10 @@ public class TaskService {
         task.setMemo(request.getMemo());
         task.setDueDate(request.getDueDate());
         task.setGenre(request.getGenre());
+        int maxSortOrder = taskRepository.findTopByGenreOrderBySortOrderDesc(request.getGenre())
+                .map(Task::getSortOrder)
+                .orElse(-1);
+        task.setSortOrder(maxSortOrder + 1);
         return taskRepository.save(task);
     }
 
