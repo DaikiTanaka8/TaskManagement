@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '--- 品質チェック ---' && echo '[Frontend] ESLint...' && npm --prefix frontend run lint 2>&1 && echo '[Frontend] ESLint: OK' && warn=$(mvn -f backend/pom.xml checkstyle:check 2>&1 | grep -c '^\\[WARN\\]' || true) && echo \"[Backend] Checkstyle warnings: $warn 件\" | { read msg; [ \"$warn\" -eq 0 ] && echo \"$msg (OK)\" || echo \"$msg (mvn checkstyle:check で詳細確認)\"; }",
+            "timeout": 120,
+            "statusMessage": "ESLint / Checkstyle チェック中..."
+          }
+        ]
+      }
+    ]
+  }
+}
