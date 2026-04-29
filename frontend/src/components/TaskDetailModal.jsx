@@ -1,13 +1,15 @@
 import { useState } from 'react';
-import { updateTask, deleteTask } from '../api/taskApi';
+import { createTask, updateTask, deleteTask } from '../api/taskApi';
 
 const GENRES = ['仕事', '家庭', '趣味', '買い物', '未設定'];
 
-function TaskDetailModal({ task, onClose, onUpdated, onDeleted }) {
-  const [title, setTitle] = useState(task.title);
-  const [memo, setMemo] = useState(task.memo || '');
-  const [dueDate, setDueDate] = useState(task.dueDate || '');
-  const [genre, setGenre] = useState(task.genre || '未設定');
+function TaskDetailModal({ task, onClose, onCreated, onUpdated, onDeleted }) {
+  const isNew = !task;
+
+  const [title, setTitle] = useState(task?.title ?? '');
+  const [memo, setMemo] = useState(task?.memo ?? '');
+  const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
+  const [genre, setGenre] = useState(task?.genre ?? '未設定');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -18,28 +20,31 @@ function TaskDetailModal({ task, onClose, onUpdated, onDeleted }) {
     }
     setSaving(true);
     setError(null);
-    updateTask(task.id, {
+
+    const payload = {
       title: title.trim(),
       memo: memo || null,
       dueDate: dueDate || null,
       genre: genre === '未設定' ? null : genre,
-      sortOrder: task.sortOrder,
-    })
-      .then((updated) => {
-        onUpdated(updated);
-        onClose();
-      })
-      .catch(() => setError('保存に失敗しました。'))
-      .finally(() => setSaving(false));
+    };
+
+    if (isNew) {
+      createTask(payload)
+        .then((created) => { onCreated(created); onClose(); })
+        .catch(() => setError('登録に失敗しました。'))
+        .finally(() => setSaving(false));
+    } else {
+      updateTask(task.id, { ...payload, sortOrder: task.sortOrder })
+        .then((updated) => { onUpdated(updated); onClose(); })
+        .catch(() => setError('保存に失敗しました。'))
+        .finally(() => setSaving(false));
+    }
   };
 
   const handleDelete = () => {
     if (!window.confirm(`「${task.title}」を削除しますか？この操作は元に戻せません。`)) return;
     deleteTask(task.id)
-      .then(() => {
-        onDeleted(task.id);
-        onClose();
-      })
+      .then(() => { onDeleted(task.id); onClose(); })
       .catch(() => setError('削除に失敗しました。'));
   };
 
@@ -51,7 +56,7 @@ function TaskDetailModal({ task, onClose, onUpdated, onDeleted }) {
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal">
         <div className="modal-header">
-          <h2 className="modal-title">タスク詳細</h2>
+          <h2 className="modal-title">{isNew ? 'タスクを作成' : 'タスク詳細'}</h2>
           <button className="modal-close" onClick={onClose}>✕</button>
         </div>
 
@@ -62,6 +67,7 @@ function TaskDetailModal({ task, onClose, onUpdated, onDeleted }) {
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              placeholder="タスクのタイトルを入力"
             />
           </div>
 
@@ -71,6 +77,7 @@ function TaskDetailModal({ task, onClose, onUpdated, onDeleted }) {
               rows={3}
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
+              placeholder="メモ（任意）"
             />
           </div>
 
@@ -97,11 +104,13 @@ function TaskDetailModal({ task, onClose, onUpdated, onDeleted }) {
         </div>
 
         <div className="modal-footer">
-          <button className="modal-delete" onClick={handleDelete}>削除</button>
+          {!isNew && (
+            <button className="modal-delete" onClick={handleDelete}>削除</button>
+          )}
           <div className="modal-footer-right">
             <button className="modal-cancel" onClick={onClose}>キャンセル</button>
             <button className="modal-save" onClick={handleSave} disabled={saving}>
-              {saving ? '保存中...' : '保存'}
+              {saving ? (isNew ? '登録中...' : '保存中...') : (isNew ? '登録する' : '保存')}
             </button>
           </div>
         </div>
