@@ -5,7 +5,7 @@ function App() {
   return (
     <>
       <header className="app-header">
-        <h1>TaskManagement</h1>
+        <h1>タスク管理ツール</h1>
       </header>
       <main className="app-main">
         <Board />

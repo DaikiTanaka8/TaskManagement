@@ -7,12 +7,16 @@ function TaskCard({ task, index, onToggleComplete, onCardClick, draggable = true
   let dueDateLabel = null;
   let dueDateClass = '';
   if (task.dueDate) {
-    const due = new Date(task.dueDate);
-    dueDateLabel = task.dueDate;
+    const due = new Date(task.dueDate + 'T00:00:00');
     if (due < today) {
       dueDateClass = 'overdue';
+      dueDateLabel = task.dueDate;
     } else if (due.getTime() === today.getTime()) {
       dueDateClass = 'today';
+      dueDateLabel = '今日';
+    } else {
+      dueDateClass = 'future';
+      dueDateLabel = task.dueDate;
     }
   }
 
@@ -36,7 +40,7 @@ function TaskCard({ task, index, onToggleComplete, onCardClick, draggable = true
       </div>
       {task.memo && <p className="task-memo">{task.memo}</p>}
       {dueDateLabel && (
-        <p className={`task-due ${dueDateClass}`}>期限: {dueDateLabel}</p>
+        <span className={`task-due-badge ${dueDateClass}`}>{dueDateLabel}</span>
       )}
     </div>
   );
