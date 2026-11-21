@@ -26,3 +26,4 @@ infra/.terraform/
 *.tfvars
 !*.tfvars.example
 crash.log
+infra/db-password.txt
