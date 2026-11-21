@@ -18,3 +18,11 @@ frontend/.vite/
 # 環境変数
 .env
 .env.local
+
+# Terraform（状態ファイル・個人設定はコミットしない）
+infra/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
