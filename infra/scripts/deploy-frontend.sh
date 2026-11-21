@@ -39,8 +39,7 @@ if [ "${1:-}" = "--setup" ]; then
 fi
 
 echo "== フロントエンドをビルド =="
-# --legacy-peer-deps: ESLint(開発用ツール)とプラグインのバージョン不一致を無視する。ビルドには影響しない
-( cd "${REPO_ROOT}/frontend" && npm ci --legacy-peer-deps --silent && npm run build --silent )
+( cd "${REPO_ROOT}/frontend" && npm ci --silent && npm run build --silent )
 
 echo "== S3 にアップロード（dist/ を丸ごと同期） =="
 aws s3 sync "${REPO_ROOT}/frontend/dist/" "s3://${BUCKET}/frontend/" --delete --region "${REGION}" --only-show-errors
