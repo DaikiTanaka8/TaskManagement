@@ -1,0 +1,22 @@
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.0"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+
+  # 作成する全リソースに共通のタグを付ける（コンソールで見分けやすくするため）
+  default_tags {
+    tags = {
+      Project   = var.project_name
+      ManagedBy = "terraform"
+    }
+  }
+}
