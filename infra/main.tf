@@ -45,6 +45,10 @@ resource "aws_vpc_security_group_ingress_rule" "http_from_my_ip" {
 }
 
 # 出ていく通信は全許可（パッケージ取得やSSM接続に必要）
+# trivy の指摘 AWS-0104 を意図的に許容する理由:
+#   dnf(パッケージ取得)・S3・SSM が外部へ出る必要がある。入ってくる通信は
+#   自分のIPの80番のみに絞っているため、リスクは限定的。
+#trivy:ignore:AVD-AWS-0104
 resource "aws_vpc_security_group_egress_rule" "all_outbound" {
   security_group_id = aws_security_group.web.id
   description       = "Allow all outbound"
@@ -100,6 +104,7 @@ resource "aws_instance" "app" {
   root_block_device {
     volume_size = 8
     volume_type = "gp3"
+    encrypted   = true # ディスクを暗号化する（追加費用なし）。既存EC2は再作成になる
   }
 
   tags = {
